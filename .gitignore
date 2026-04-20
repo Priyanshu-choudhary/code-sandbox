@@ -1,0 +1,18 @@
+# Binaries
+goboxd
+*.exe
+*.test
+/bin/
+
+# Job scratch dirs
+/tmp/goboxd/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
