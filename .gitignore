@@ -1,5 +1,5 @@
-# Binaries
-goboxd
+# Build output binary (root-level only)
+/goboxd
 *.exe
 *.test
 /bin/
