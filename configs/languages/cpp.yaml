@@ -1,0 +1,33 @@
+name: cpp
+version: "g++ 12"
+source_file: main.cpp
+artifact: main
+build:
+  command: /usr/bin/g++
+  args:
+    - "-O2"
+    - "-std=c++17"
+    - "-o"
+    - "{{artifact}}"
+    - "{{source}}"
+  allowed_flags:
+    - "-O0"
+    - "-O1"
+    - "-O2"
+    - "-O3"
+    - "-std=c++11"
+    - "-std=c++14"
+    - "-std=c++17"
+    - "-std=c++20"
+    - "-Wall"
+    - "-Wextra"
+    - "-pthread"
+  time_limit_s: 20
+  memory_kb: 524288
+  max_processes: 64
+run:
+  command: /sandbox/main
+  args: []
+  time_limit_s: 5
+  memory_kb: 262144
+  max_processes: 64
