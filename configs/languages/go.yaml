@@ -1,0 +1,21 @@
+name: go
+version: "go 1.x"
+source_file: main.go
+artifact: main
+build:
+  command: /usr/bin/go
+  args:
+    - "build"
+    - "-o"
+    - "/sandbox/{{artifact}}"
+    - "/sandbox/{{source}}"
+  allowed_flags: []
+  time_limit_s: 60
+  memory_kb: 2097152
+  max_processes: 512
+run:
+  command: /sandbox/main
+  args: []
+  time_limit_s: 5
+  memory_kb: 2097152
+  max_processes: 256

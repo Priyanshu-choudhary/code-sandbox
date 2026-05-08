@@ -1,0 +1,24 @@
+name: java
+version: "OpenJDK 17"
+source_file: Main.java
+artifact: Main
+build:
+  command: /usr/bin/javac
+  args:
+    - "{{source}}"
+  allowed_flags: []
+  time_limit_s: 30
+  memory_kb: 4194304
+  max_processes: 256
+run:
+  command: /usr/bin/java
+  args:
+    - "-cp"
+    - "/sandbox"
+    - "-Xss64m"
+    - "-Xmx256m"
+    - "Main"
+  allowed_flags: []
+  time_limit_s: 10
+  memory_kb: 4194304
+  max_processes: 256

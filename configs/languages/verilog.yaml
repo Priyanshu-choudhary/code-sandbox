@@ -1,0 +1,25 @@
+name: verilog
+version: "Icarus Verilog 11"
+source_file: main.v
+artifact: main.vvp
+build:
+  command: /usr/bin/iverilog
+  args:
+    - "-o"
+    - "{{artifact}}"
+    - "{{source}}"
+  allowed_flags:
+    - "-g2005"
+    - "-g2012"
+    - "-Wall"
+  time_limit_s: 15
+  memory_kb: 524288
+  max_processes: 64
+run:
+  command: /usr/bin/vvp
+  args:
+    - "/sandbox/{{artifact}}"
+  allowed_flags: []
+  time_limit_s: 10
+  memory_kb: 262144
+  max_processes: 64

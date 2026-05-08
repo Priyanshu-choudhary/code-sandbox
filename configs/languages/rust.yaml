@@ -1,0 +1,26 @@
+name: rust
+version: "rustc 1.x"
+source_file: main.rs
+artifact: main
+build:
+  command: /usr/bin/rustc
+  args:
+    - "-O"
+    - "--edition=2021"
+    - "-o"
+    - "{{artifact}}"
+    - "{{source}}"
+  allowed_flags:
+    - "-O"
+    - "--edition=2015"
+    - "--edition=2018"
+    - "--edition=2021"
+  time_limit_s: 30
+  memory_kb: 1048576
+  max_processes: 64
+run:
+  command: /sandbox/main
+  args: []
+  time_limit_s: 5
+  memory_kb: 262144
+  max_processes: 64
