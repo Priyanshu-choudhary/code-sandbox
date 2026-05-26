@@ -16,6 +16,7 @@ import (
 	"github.com/Priyanshu-choudhary/code-sandbox/internal/config"
 	"github.com/Priyanshu-choudhary/code-sandbox/internal/executor"
 	"github.com/Priyanshu-choudhary/code-sandbox/internal/registry"
+	"github.com/Priyanshu-choudhary/code-sandbox/internal/worker"
 )
 
 func main() {
@@ -58,23 +59,55 @@ func main() {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
-	// Graceful shutdown.
+	// Graceful shutdown via a cancellable root context.
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+
+	// Start SQS worker if configured.
+	workerDone := make(chan struct{})
+	if cfg.SQSQueueURL != "" {
+		slog.Info("sqs worker enabled",
+			"queue_url", cfg.SQSQueueURL,
+			"redis_addr", cfg.RedisAddr,
+			"redis_tls", cfg.RedisTLS,
+			"sqs_workers", cfg.SQSWorkers,
+		)
+		w, err := worker.New(cfg.SQSQueueURL, cfg.RedisAddr, cfg.RedisTLS, exec, cfg.SQSWorkers)
+		if err != nil {
+			slog.Error("failed to create sqs worker", "err", err)
+			os.Exit(1)
+		}
+		go func() {
+			defer close(workerDone)
+			w.Start(rootCtx)
+		}()
+	} else {
+		slog.Info("sqs worker disabled (SQS_QUEUE_URL not set)")
+		close(workerDone)
+	}
+
+	// Signal handler.
 	idle := make(chan struct{})
 	go func() {
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 		<-sig
 		slog.Info("shutdown signal received")
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		// Cancel root context first — stops the SQS worker.
+		rootCancel()
+		// Then shut down HTTP.
+		shutCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		if err := srv.Shutdown(ctx); err != nil {
+		if err := srv.Shutdown(shutCtx); err != nil {
 			slog.Error("shutdown error", "err", err)
 		}
+		// Wait for worker to drain.
+		<-workerDone
 		close(idle)
 	}()
 
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("listen", "err", err)
+		rootCancel()
 		os.Exit(1)
 	}
 	<-idle

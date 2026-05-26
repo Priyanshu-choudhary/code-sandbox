@@ -23,6 +23,12 @@ type Config struct {
 	// can't accidentally match the jail process's uid.
 	JailUID int
 	JailGID int
+
+	// Async SQS worker — set SQSQueueURL to enable.
+	SQSQueueURL  string // e.g. https://sqs.ap-south-1.amazonaws.com/936344984906/cfc-execution-jobs
+	RedisAddr    string // e.g. localhost:6379 or valkey-endpoint:6379
+	RedisTLS     bool   // true for ElastiCache Serverless (enforces TLS)
+	SQSWorkers   int    // number of parallel SQS polling goroutines (default 2)
 }
 
 func Load() Config {
@@ -39,6 +45,11 @@ func Load() Config {
 		MaxTestCases:    envIntOr("GOBOXD_MAX_TEST_CASES", 100),
 		JailUID:         envIntOr("GOBOXD_JAIL_UID", 99999),
 		JailGID:         envIntOr("GOBOXD_JAIL_GID", 99999),
+
+		SQSQueueURL: envOr("SQS_QUEUE_URL", ""),
+		RedisAddr:   envOr("REDIS_ADDR", "localhost:6379"),
+		RedisTLS:    envOr("REDIS_TLS", "false") == "true",
+		SQSWorkers:  envIntOr("GOBOXD_SQS_WORKERS", 2),
 	}
 }
 
