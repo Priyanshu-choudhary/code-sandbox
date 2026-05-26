@@ -3,6 +3,7 @@ name: Build & Deploy to ECS
 on:
   push:
     branches: [main]
+  workflow_dispatch:   # allows manual trigger from GitHub Actions tab
 
 env:
   AWS_REGION:       ap-south-1
