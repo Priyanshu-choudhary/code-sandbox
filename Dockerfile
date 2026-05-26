@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-ARG GO_VERSION=1.23
+ARG GO_VERSION=1.24
 ARG DEBIAN_VERSION=bookworm
 ARG NSJAIL_VERSION=3.4
 
