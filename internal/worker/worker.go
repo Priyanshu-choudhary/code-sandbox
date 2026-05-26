@@ -207,6 +207,22 @@ func (w *Worker) handleMessage(ctx context.Context, msg types.Message) {
 		log.Error("executor error", "err", execErr)
 		_ = w.writeRedis(ctx, job.JobID, "ERROR", nil, execErr.Error())
 	} else {
+		// For playground runs (type=run) we set no expected output, so the
+		// executor marks any non-empty stdout as wrong_output. Mirror the
+		// behaviour of the HTTP handler and downgrade it to accepted.
+		if job.Type == "run" {
+			for i := range resp.Tests {
+				if resp.Tests[i].Status == executor.StatusWrongOutput ||
+					resp.Tests[i].Status == executor.StatusWhitespaceMismatch {
+					resp.Tests[i].Status = executor.StatusAccepted
+				}
+			}
+			if resp.Status == executor.StatusWrongOutput ||
+				resp.Status == executor.StatusWhitespaceMismatch {
+				resp.Status = executor.StatusAccepted
+			}
+		}
+
 		// Determine top-level status to propagate.
 		redisStatus := "DONE"
 		if resp.Status == executor.StatusTimeExceeded {
