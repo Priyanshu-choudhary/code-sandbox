@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"os"
 	"strconv"
 	"time"
 
@@ -54,7 +55,19 @@ type Worker struct {
 //   - redisTLS  : true when the Redis endpoint requires TLS (ElastiCache Serverless)
 //   - workers   : number of parallel SQS polling goroutines
 func New(queueURL, redisAddr string, redisTLS bool, exec *executor.Executor, workers int) (*Worker, error) {
-	cfg, err := awsconfig.LoadDefaultConfig(context.Background())
+	// Region is set via AWS_REGION / AWS_DEFAULT_REGION env var (injected by ECS
+	// task definition). Fall back to ap-south-1 if not set.
+	region := os.Getenv("AWS_REGION")
+	if region == "" {
+		region = os.Getenv("AWS_DEFAULT_REGION")
+	}
+	if region == "" {
+		region = "ap-south-1"
+	}
+
+	cfg, err := awsconfig.LoadDefaultConfig(context.Background(),
+		awsconfig.WithRegion(region),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("aws config: %w", err)
 	}
