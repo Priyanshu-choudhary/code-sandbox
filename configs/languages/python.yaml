@@ -1,0 +1,10 @@
+name: python
+version: "3"
+source_file: main.py
+build: null
+run:
+  command: /usr/bin/python3
+  args: ["{{source}}"]
+  time_limit_s: 5
+  memory_kb: 262144
+  max_processes: 64

@@ -1,0 +1,86 @@
+name: Build & Deploy to ECS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:   # allows manual trigger from GitHub Actions tab
+
+env:
+  AWS_REGION:       ap-south-1
+  ECR_REGISTRY:     936344984906.dkr.ecr.ap-south-1.amazonaws.com
+  ECR_REPOSITORY:   code-sandbox
+  ECS_CLUSTER:      goboxd-cluster
+  ECS_SERVICE:      goboxd-service
+  CONTAINER_NAME:   goboxd
+
+jobs:
+  build-and-deploy:
+    name: Build → ECR → ECS
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # ── 2. AWS credentials ─────────────────────────────────────────────────
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      # ── 3. ECR login ───────────────────────────────────────────────────────
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ── 4. Docker Buildx (needed for layer caching) ────────────────────────
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ── 5. Build & push  ───────────────────────────────────────────────────
+      #   The nsjail compile stage is cached in GitHub Actions cache (~5 min saved).
+      #   We tag with both the git SHA (immutable) and 'latest'.
+      - name: Build and push image to ECR
+        uses: docker/build-push-action@v5
+        with:
+          context:    .
+          target:     runtime          # final stage in the multi-stage Dockerfile
+          push:       true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      # ── 6. Grab current task definition ────────────────────────────────────
+      #   We download the live task def so we preserve every setting and only
+      #   swap out the image tag. This avoids config drift from manual edits.
+      - name: Download current ECS task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition goboxd \
+            --query  taskDefinition \
+            --output json > task-def.json
+
+      # ── 7. Inject new image tag ────────────────────────────────────────────
+      - name: Render new task definition with updated image
+        id: render-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-def.json
+          container-name:  ${{ env.CONTAINER_NAME }}
+          image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      # ── 8. Deploy ──────────────────────────────────────────────────────────
+      - name: Deploy to ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition:           ${{ steps.render-task-def.outputs.task-definition }}
+          service:                   ${{ env.ECS_SERVICE }}
+          cluster:                   ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true

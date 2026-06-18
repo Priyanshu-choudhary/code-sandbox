@@ -1,0 +1,10 @@
+{
+  "jobId": "test-sqs-job-12345",
+  "type": "run",
+  "sourceCode": "#include <iostream>\nint main() { int a, b; if(std::cin >> a >> b) { std::cout << (a + b) << \"\\n\"; } return 0; }",
+  "language": "cpp",
+  "testCases": {
+    "10 20\n": "30\n"
+  },
+  "queuedAt": 1718640000
+}

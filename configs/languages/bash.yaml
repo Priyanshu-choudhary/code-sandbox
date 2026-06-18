@@ -1,0 +1,12 @@
+name: bash
+version: "GNU bash 5"
+source_file: main.sh
+build: null
+run:
+  command: /bin/bash
+  args:
+    - "{{source}}"
+  allowed_flags: []
+  time_limit_s: 5
+  memory_kb: 131072
+  max_processes: 64

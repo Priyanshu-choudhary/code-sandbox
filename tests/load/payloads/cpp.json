@@ -1,0 +1,5 @@
+{
+  "language": "cpp",
+  "source": "#include <iostream>\nint main(){int a,b;std::cin>>a>>b;std::cout<<a+b<<std::endl;return 0;}",
+  "test_cases": [{"input": "10 20\n", "expected_output": "30\n"}]
+}

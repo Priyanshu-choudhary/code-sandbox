@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: goboxd-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  goboxd:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: goboxd-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    
+    # Matching AWS ECS security configurations for a code sandbox
+    privileged: true
+    cap_add:
+      - SYS_ADMIN
+      - NET_ADMIN
+      - SYS_PTRACE
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+    environment:
+      - APP_ENV=development
+      - GOBOXD_LOG_LEVEL=info
+      - GOBOXD_HTTP_ADDR=:8080
+      - GOBOXD_QUEUE_DEPTH=8
+      - GOBOXD_SQS_WORKERS=2
+      - GOBOXD_LANGUAGES_DIR=/etc/goboxd/languages
+      - GOBOXD_JOB_ROOT=/tmp/goboxd
+      - GOBOXD_REQUEST_TIMEOUT_S=60
+      - GOBOXD_MAX_CONCURRENCY=2
+      
+      # Live AWS SQS Endpoint Configuration
+      - SQS_JOBS_QUEUE_URL=https://sqs.ap-south-1.amazonaws.com/936344984906/cfc-execution-jobs
+      
+      # Local Redis Setup (Ditching AWS ElastiCache TLS)
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_TLS=false
+      
+      # Forwards your computer's active AWS terminal credentials into the container
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+
+
+

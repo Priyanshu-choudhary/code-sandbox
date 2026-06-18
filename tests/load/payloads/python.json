@@ -1,0 +1,5 @@
+{
+  "language": "python",
+  "source": "print(sum(map(int, input().split())))",
+  "test_cases": [{"input": "1 2 3 4 5\n", "expected_output": "15\n"}]
+}

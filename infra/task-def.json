@@ -1,0 +1,61 @@
+{
+  "family": "goboxd",
+  "networkMode": "bridge",
+  "requiresCompatibilities": ["EC2"],
+
+  "executionRoleArn": "arn:aws:iam::936344984906:role/ecsTaskExecutionRole-goboxd",
+
+  "cpu":    "1792",
+  "memory": "3584",
+
+  "containerDefinitions": [
+    {
+      "name":  "goboxd",
+      "image": "936344984906.dkr.ecr.ap-south-1.amazonaws.com/code-sandbox:latest",
+
+      "essential": true,
+
+      "privileged": true,
+      "linuxParameters": {
+        "capabilities": {
+          "add": ["SYS_ADMIN", "NET_ADMIN", "SYS_PTRACE"]
+        }
+      },
+
+      "portMappings": [
+        { "containerPort": 8080, "hostPort": 0, "protocol": "tcp" }
+      ],
+
+      "environment": [
+        { "name": "GOBOXD_HTTP_ADDR",        "value": ":8080"              },
+        { "name": "GOBOXD_LANGUAGES_DIR",     "value": "/etc/goboxd/languages" },
+        { "name": "GOBOXD_JOB_ROOT",          "value": "/tmp/goboxd"       },
+        { "name": "GOBOXD_MAX_CONCURRENCY",   "value": "4"                 },
+        { "name": "GOBOXD_QUEUE_DEPTH",       "value": "16"                },
+        { "name": "GOBOXD_REQUEST_TIMEOUT_S", "value": "60"                },
+        { "name": "GOBOXD_LOG_LEVEL",         "value": "info"              }
+      ],
+
+      "healthCheck": {
+        "command":     ["CMD-SHELL", "curl -f http://localhost:8080/healthz || exit 1"],
+        "interval":    15,
+        "timeout":     5,
+        "retries":     3,
+        "startPeriod": 30
+      },
+
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group":         "/ecs/goboxd",
+          "awslogs-region":        "ap-south-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+
+      "ulimits": [
+        { "name": "nofile", "softLimit": 65536, "hardLimit": 65536 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+name: c
+version: "gcc 12"
+source_file: main.c
+artifact: main
+build:
+  command: /usr/bin/gcc
+  args:
+    - "-O2"
+    - "-std=c17"
+    - "-o"
+    - "{{artifact}}"
+    - "{{source}}"
+  allowed_flags:
+    - "-O0"
+    - "-O1"
+    - "-O2"
+    - "-O3"
+    - "-std=c89"
+    - "-std=c99"
+    - "-std=c11"
+    - "-std=c17"
+    - "-Wall"
+    - "-Wextra"
+  time_limit_s: 15
+  memory_kb: 524288
+  max_processes: 64
+run:
+  command: /sandbox/main
+  args: []
+  time_limit_s: 5
+  memory_kb: 262144
+  max_processes: 64

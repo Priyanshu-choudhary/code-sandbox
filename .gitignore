@@ -1,0 +1,19 @@
+# Build output binary (root-level only)
+/goboxd
+*.exe
+*.test
+/bin/
+
+# Job scratch dirs
+/tmp/goboxd/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+.env
